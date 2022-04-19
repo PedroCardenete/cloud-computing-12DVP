@@ -26,3 +26,4 @@ nvm ls
 
 npm install -g serverless
 
+#
