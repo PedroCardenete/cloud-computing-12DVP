@@ -1,0 +1,295 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "The AWS CloudFormation template for this Serverless application",
+  "Resources": {
+    "ServerlessDeploymentBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "ServerlessDeploymentBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "ServerlessDeploymentBucket"
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":s3:::",
+                      {
+                        "Ref": "ServerlessDeploymentBucket"
+                      },
+                      "/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":s3:::",
+                      {
+                        "Ref": "ServerlessDeploymentBucket"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": false
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "GetObjectLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/monitorjpgppw-dev-getObject"
+      }
+    },
+    "RemoveObjectLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/monitorjpgppw-dev-removeObject"
+      }
+    },
+    "GetObjectLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/monitorjpgppw/dev/1650424760046-2022-04-20T03:19:20.046Z/monitorjpgppw.zip"
+        },
+        "Handler": "handler.handlerCreateObject",
+        "Runtime": "python3.8",
+        "FunctionName": "monitorjpgppw-dev-getObject",
+        "MemorySize": 128,
+        "Timeout": 6,
+        "Role": {
+          "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:role/LabRole"
+        }
+      },
+      "DependsOn": [
+        "GetObjectLogGroup"
+      ]
+    },
+    "RemoveObjectLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/monitorjpgppw/dev/1650424760046-2022-04-20T03:19:20.046Z/monitorjpgppw.zip"
+        },
+        "Handler": "handler.handlerDeleteObject",
+        "Runtime": "python3.8",
+        "FunctionName": "monitorjpgppw-dev-removeObject",
+        "MemorySize": 128,
+        "Timeout": 6,
+        "Role": {
+          "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:role/LabRole"
+        }
+      },
+      "DependsOn": [
+        "RemoveObjectLogGroup"
+      ]
+    },
+    "GetObjectLambdaVersionEn2BDDx8XUN2hBTqJFCt1KFO10c2s9iqcUj9TWRsops": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "GetObjectLambdaFunction"
+        },
+        "CodeSha256": "7MjYbRzE1HtV+wfOUP71AUKBOFNrH+BHn2xe4Nf+FmI="
+      }
+    },
+    "RemoveObjectLambdaVersionkWzPu5WgExVPp3RePyp3EUuNEQfiXHlzBYAcBRHGHyk": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "RemoveObjectLambdaFunction"
+        },
+        "CodeSha256": "7MjYbRzE1HtV+wfOUP71AUKBOFNrH+BHn2xe4Nf+FmI="
+      }
+    },
+    "S3BucketMonitorjpgppw": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": "monitor-jpg-ppw",
+        "NotificationConfiguration": {
+          "LambdaConfigurations": [
+            {
+              "Event": "s3:ObjectCreated:*",
+              "Function": {
+                "Fn::GetAtt": [
+                  "GetObjectLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Filter": {
+                "S3Key": {
+                  "Rules": [
+                    {
+                      "Name": "prefix",
+                      "Value": "entrada-dados/"
+                    },
+                    {
+                      "Name": "suffix",
+                      "Value": ".json"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "Event": "s3:ObjectRemoved:*",
+              "Function": {
+                "Fn::GetAtt": [
+                  "RemoveObjectLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Filter": {
+                "S3Key": {
+                  "Rules": [
+                    {
+                      "Name": "prefix",
+                      "Value": "entrada-dados/"
+                    },
+                    {
+                      "Name": "suffix",
+                      "Value": ".json"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "DependsOn": [
+        "GetObjectLambdaPermissionMonitorjpgppwS3",
+        "RemoveObjectLambdaPermissionMonitorjpgppwS3"
+      ]
+    },
+    "GetObjectLambdaPermissionMonitorjpgppwS3": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "GetObjectLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "s3.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":s3:::monitor-jpg-ppw"
+            ]
+          ]
+        },
+        "SourceAccount": {
+          "Ref": "AWS::AccountId"
+        }
+      }
+    },
+    "RemoveObjectLambdaPermissionMonitorjpgppwS3": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "RemoveObjectLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "s3.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":s3:::monitor-jpg-ppw"
+            ]
+          ]
+        },
+        "SourceAccount": {
+          "Ref": "AWS::AccountId"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "ServerlessDeploymentBucketName": {
+      "Value": {
+        "Ref": "ServerlessDeploymentBucket"
+      },
+      "Export": {
+        "Name": "sls-monitorjpgppw-dev-ServerlessDeploymentBucketName"
+      }
+    },
+    "GetObjectLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "GetObjectLambdaVersionEn2BDDx8XUN2hBTqJFCt1KFO10c2s9iqcUj9TWRsops"
+      },
+      "Export": {
+        "Name": "sls-monitorjpgppw-dev-GetObjectLambdaFunctionQualifiedArn"
+      }
+    },
+    "RemoveObjectLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "RemoveObjectLambdaVersionkWzPu5WgExVPp3RePyp3EUuNEQfiXHlzBYAcBRHGHyk"
+      },
+      "Export": {
+        "Name": "sls-monitorjpgppw-dev-RemoveObjectLambdaFunctionQualifiedArn"
+      }
+    }
+  }
+}

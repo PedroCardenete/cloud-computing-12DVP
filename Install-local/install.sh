@@ -50,7 +50,8 @@ pip3 install virtualenv && python3 -m venv ~/venv
 
 source ~/venv/bin/activate
 
-# Boto3 
+# Boto3 Install
 
 pip3 install boto3
 
+# AWS Cli Install
