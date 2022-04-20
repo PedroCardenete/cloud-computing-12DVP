@@ -6,6 +6,9 @@
 - PAULO HENRIQUE NUNES VANDERLEY – RM 343889
 - WAGNER EDUARDO PEREIRA – RM 342643
 
+
+[Link GitHub](https://github.com/PedroCardenete/cloud-computing-12DVP)
+
 ## (Opcional) Instalar ambiente local para execução do Serverless Framework. 
 
 Para preparar o ambiente local, executar o script abaixo. 
